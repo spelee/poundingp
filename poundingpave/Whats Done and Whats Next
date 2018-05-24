@@ -1,0 +1,36 @@
+Managing contacts via the CLI
+
+___ Add person
+|___ storing attributes and names properly
+___ Delete person
+___ Update person
+___ Query person
+|___ Pretty printing, with headers
+
+___ Test functions for all above actions
+
+
+Contact DB
+
+___ First attempt with csv
+___ 2nd attempt with some form of object serialization
+___ 3rd attempt with some DB.
+
+
+Testing
+
+CLI Testing
+1) Attempt to interact with the Person DB when no db has exists
+(a) Test querying non-existing db - get by first and last name
+    -> should create empty database and print nothing
+(b) Test querying non-existing db - get all users
+    -> should create empty database and print nothing
+(c) Test adding to non-existing db
+    -> should create empty database and add person and print person
+(d) Test adding w/multiple attributes to non-existing database
+    -> should create empty database and add person with attributes and print
+(e) Test adding person, with single note to non-existing database
+    -> should create empty database and add person with note and print
+(f) XXX this will currently fail
+    Test adding person, with mutliple notes to non-existing database
+    -> should create empty database and add person with multiple notes and print
