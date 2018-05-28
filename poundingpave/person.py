@@ -1,41 +1,36 @@
-import argparse
-
-import person_db_intf
+import copy
+# XXX this is duplicated in to many places...
+# such as the person_db_csv file
+# How do you make this static?
+required_attributes = ['first_name',
+                       'last_name',
+                       'company',
+                       'email',
+                       'mobile_phone',
+                       'work_phone',
+                       'role',
+                       'interaction',
+                       'notes']
 
 
 class Person():
     """A person"""
 
-    def __init__(self, first_name, last_name, attributes={}):
-
-        self.req_attributes = ['first_name',
-                               'last_name',
-                               'company',
-                               'email',
-                               'mobile_phone',
-                               'work_phone',
-                               'role',
-                               'interaction',
-                               'notes']
-
-        self.attributes = {}
+    def __init__(self, first_name, last_name, attributes=None):
+        # XXX do we want to store a copy?
+        self.attributes = \
+            {} if not attributes else copy.deepcopy(attributes)
+        self.attributes.setdefault('notes', [])
+        self.attributes.setdefault('interaction', [])
         self.attributes['first_name'] = first_name
         self.attributes['last_name'] = last_name
 
-        # Storing attributes in a dict (as copies)
-        for k in attributes:
-            self.attributes[k] = attributes[k]
-
-        # Defaults for req'd attributes
-        for k in self.req_attributes:
-            self.attributes.setdefault(k, "")
-
-        # Set defaults for lists
-        self.attributes['interaction'] = []
-        self.attributes['notes'] = []
+    def get_name(self):
+        """Gets full name as tuple (first, last)"""
+        return (self.attributes['first_name'], self.attributes['last_name'])
 
     def set_company(self, company):
-        self.attirbutes['company'] = company
+        self.attributes['company'] = company
 
     def set_email(self, email):
         self.attributes['email'] = email
@@ -49,66 +44,93 @@ class Person():
     def set_role(self, role):
         self.attributes['role'] = role
 
-    def add_interaction(self, interaction):
-        self.attributes["interaction"].append(interaction)
+    def add_interactions(self, interactions):
+        """
+        Accepts iterable
+        """
+        if isinstance(interactions, str):
+            interactions = [interactions]
+        self.attributes.setdefault("interaction", []).extend(interactions)
 
-    def add_note(self, note):
-        self.attributes["notes"].append(note)
+    def reset_interactions(self):
+        """zeros out interactions"""
+        self.attributes['interaction'] = []
 
-    def __str__(self):
-        return "{first_name},{last_name},{company},{email},{mobile_phone},{work_phone},{role},{interaction},{notes}".format(
-            **self.attributes)
+    def replace_interactions(self, interactions):
+        self.attributes["interaction"] = interactions
+
+    def get_interactions(self):
+        return self.attributes.get("interaction", [])
+
+    def add_notes(self, notes):
+        """
+        Accepts iterable of notes
+        """
+        if isinstance(notes, str):
+            notes = [notes]
+        self.attributes.setdefault("notes", []).extend(notes)
+
+    def reset_notes(self):
+        """zeros out notes"""
+        self.attributes['notes'] = []
+
+    def replace_notes(self, notes):
+        self.attributes["notes"] = notes
+
+    def get_notes(self):
+        return self.attributes.get("notes", [])
+
+    def update(self, attributes):
+        """
+        Update attributes means copy attributes to the person.
+        Updating 'interaction' and 'notes' means appending
+        """
+        for k in attributes:
+            if k == "interaction":
+                self.add_interactions(attributes[k])
+
+            elif k == "notes":
+                self.add_notes(attributes[k])
+
+            else:
+                self.attributes[k] = attributes[k]
 
     def req_attributes(self):
         """Return dict (copy) w/only those attributes defined as required"""
-        req_dict = {}
-        for att in self.req_attributes:
-            req_dict[att] = self.attributes[att]
-        return req_dict
+        return {k: self.attributes.get(k, None) for k in required_attributes}
 
     def req_attributes_as_list(self):
-        req_list = []
-        for att in self.req_attributes:
-            req_list.append(self.attributes[att])
-        return req_list
+        return [self.attributes.get(k, None) for k in required_attributes]
 
+    def __str__(self):
+        return "|".join(
+            [self.attributes.get(k, "").__str__() for k in required_attributes])
 
-def person_cli():
-    parser = argparse.ArgumentParser(
-        description="Interface with the person db")
-    subparsers = parser.add_subparsers(help="person db CLI subcommands")
+    def __eq__(self, other):
+        """Equality only tests for name!"""
+        if isinstance(self, other.__class__):
 
-    # subparser to add person
-    parser_add = subparsers.add_parser("add", help="add person")
-    parser_add.add_argument("first_name", help="contact's first name")
-    parser_add.add_argument("last_name", help="contact's last name")
-    parser_add.add_argument("-e", "--email",
-                            help="person's email address")
-    parser_add.set_defaults(func=add_person_cli)
+            return (self.attributes['first_name'] == other.attributes['first_name'] and
+                    self.attributes['last_name'] == other.attributes['last_name'])
+        return NotImplemented
 
-    args = parser.parse_args()
+    def __ne__(self, other):
+        x = self.__eq__(other)
+        if x is NotImplemented:
+            return NotImplemented
+        return not x
 
-    print(args.func(args))
+    def deep_equals(self, other):
+        if isinstance(self, other.__class__):
+            for att in required_attributes:
+                if (self.attributes.get(att, '') !=
+                        other.attributes.get(att, '')):
+                    return False
+            return True
+        return False  # NotImplemented not nec because deep_equals is custom
 
-
-def add_person_cli(args):
-    """Creating person and adding to db via CLI"""
-    print("Adding person...")
-    att = dict(vars(args))  # XXX is it nec to make copy of args.__dict__?
-    first_name = att.pop('first_name')
-    last_name = att.pop('last_name')
-    att.pop('func')
-    p = Person(first_name, last_name, att)
-    person_db_intf.add_person(p)
-
-
-def print_people_cli(args):
-    """List people from db via CLI"""
-    pass
-
-
-if __name__ == "__main__":
-    # TODO: Should the argparse import be here?
-    #    import argparse
-
-    person_cli()
+    def deep_membership(self, others):
+        for o in others:
+            if self.deep_equals(o):
+                return True
+        return False

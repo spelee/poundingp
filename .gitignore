@@ -5,3 +5,11 @@ __pycache__/
 # Django stuff:
 *.log
 db.sqlite3
+
+#apple stuff
+.DS_Store
+
+.pytest_cache/
+
+# db type stuff
+people.csv

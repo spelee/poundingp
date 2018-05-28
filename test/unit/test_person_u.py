@@ -1,3 +1,4 @@
+import copy
 import pytest
 from poundingpave.person import Person
 
@@ -19,6 +20,8 @@ def initialized_tasks_db(tmpdir):
 # valid people test input set.  incudes full atributes
 test_person_argnames = "first,last,attributes"
 
+# XXX this is faulty test input  because we are not resetting the test data
+# all changes are being made inplace..
 test_people_inputs = [
     ("james", "dean", {}),  # no attributes
     ("billy", "joel", {  # full attributes, mult inter & notes
@@ -78,22 +81,72 @@ class TestPerson():
         p.set_work_phone(v)
         assert p.attributes['work_phone'] == v
 
-    def set_role(self, first, last, attributes):
+    def test_set_role(self, first, last, attributes):
         p = Person(first, last, attributes)
         v = "lazy bum"
         p.set_role(v)
         assert p.attributes['role'] == v
 
+    def test_add_interaction(self, first, last, attributes):
+        # adding single interaction
+        # must copy first, otherwise just testing against itself
+        # if end object doesn't already make a copy of attributes
+        oldinteractions = copy.deepcopy(attributes.get('interaction', []))
 
+        p = Person(first, last, attributes)
+        v = "talked shop over beers and sliders"
+
+        p.add_interactions(v)
+        newinteractions = p.attributes['interaction']
+
+        oldinteractions.append(v)
+
+        assert oldinteractions == newinteractions
+
+    def test_add_interactions(self, first, last, attributes):
+        # adding multiple interaction
+        # must copy first, otherwise just testing against itself
+        oldinteractions = copy.deepcopy(attributes.get('interaction', []))
+
+        p = Person(first, last, attributes)
+        v = ("talked shop over beers and sliders", "grabbed lunch")
+
+        p.add_interactions(v)
+        newinteractions = p.attributes['interaction']
+
+        for i in v:
+            oldinteractions.append(i)
+
+        assert oldinteractions == newinteractions
+
+    def test_replace_interactions(self, first, last, attributes):
+        p = Person(first, last, attributes)
+        v = ["talked shop over beers and sliders", "grabbed lunch"]
+
+        p.replace_interactions(v)
+        assert p.attributes["interaction"] == v
+
+    def test_get_interactions(self, first, last, attributes):
+        p = Person(first, last, attributes)
+        # must copy and occur first, otherwise just testing against itself
+        oldinteractions = copy.deepcopy(attributes.get('interaction', []))
+
+        # asserting that interations retrieved are right ones
+        assert p.get_interactions() == oldinteractions
+
+        v = ["talked shop over beers and sliders", "grabbed lunch"]
+        p.add_interactions(v)
+
+        for i in v:
+            oldinteractions.append(i)
+        assert p.get_interactions() == oldinteractions
+
+    # XXX as a integration test... set sequence of actions...
+
+
+# more tests to create for each function...
 '''
-    def add_interactions(self, interactions):
-        self.attributes.setdefault("interaction", []).extend(interactions)
 
-    def replace_interactions(self, interactions):
-        self.attributes["interaction"] = interactions
-
-    def get_interactions(self):
-        return self.attributes.get("interaction", [])
 
     def add_notes(self, notes):
         self.attributes.setdefault("notes", []).extend(notes)

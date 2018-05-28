@@ -1,49 +1,50 @@
-import csv
-from csv import reader
+import sqlite3
+from sqlite3 import Error
 
-from tempfile import mkstemp
-from shutil import move
-from os import fdopen, remove
-import os
-
-from . import person
-from .person import Person
+import poundingpave.person
+from poundingpave.person import Person
 
 
-class Person_DB_CSV():
-    """
-    Can add, update, query, and delete people in a csv file, but very inefficient.  Every action requires at least one read/write of the file.
-    """
+class Person_DB_SQLite():
 
-    def __init__(self, path="people.csv"):
+    def __init__(self, path="poundingpv.db"):
         self.path = path
 
     def header(self):
-        return person.required_attributes
+        return poundingpave.person.required_attributes
 
     def db_exists(self):
+        # XXX doesn't work for sql version
         # i realize there can simply test if file exists.
         # written this way as more of an example of exception catching...
         try:
             with open(self.path, newline=''):
                 pass
-        except FileNotFoundError:
+        except FileNotFoundError as fe:
+            print(fe)
             return False
         return True
 
     def init_db(self, overwrite=False):
         """Initialize, possibly overwriting existing db"""
-        if(self.db_exists() and not overwrite):
-            return  # do nothing
-        touch(self.path)
+        # create a connection
+        try:
+            conn = sqlite3.connect(self.path)
+        except Error as e:
+            print(e)
+        finally:
+            conn.close()
+
+        # XXX currently there is no sesne over overwritng here...
 
     def drop_db(self):
         """Simply deletes the db"""
-        remove(self.path)
+        pass
 
     def get_people(self):
         """
-        Returns a generator that yields a person with each iter call.
+        Returns all people in db as a list.  Init db if it doesn't exist
+        XXX try making as a generator function in future?
         """
         people = []
 
@@ -145,3 +146,11 @@ def string_to_list(input):
         return []
     return [v.strip().strip("\'\"") for v in input.strip("[]").split(",")]
     """
+
+
+if __name__ == '__main__':
+    db = Person_DB_SQLite()
+    print(db.db_exists())
+    print(db.header())
+    print(db.db_exists())
+    db.init_db()

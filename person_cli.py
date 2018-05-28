@@ -3,6 +3,7 @@
 
 import argparse
 
+import poundingpave.person
 from poundingpave.person import Person
 from poundingpave.person_db_csv import Person_DB_CSV
 from poundingpave.settings import Settings
@@ -22,7 +23,10 @@ def person_cli():
     parser_add.add_argument("first_name", help="contact's first name")
     parser_add.add_argument("last_name", help="contact's last name")
     parser_add.add_argument("-t", "--attributes", nargs="+",
-                            help="<attribute>=<value>")
+                            help="<attribute>=<value> (attributes include" +
+                            ": " + ", ".join(
+                                poundingpave.person.required_attributes) +
+                            ")")
     parser_add.set_defaults(func=add_person_cli)
 
     # subparser to query people
