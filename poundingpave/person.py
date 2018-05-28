@@ -134,3 +134,27 @@ class Person():
             if self.deep_equals(o):
                 return True
         return False
+
+
+def print_dict(d, prefix=""):
+    # recursive print
+    for k in d:
+        print("{}{} -> ".format(prefix, k))
+        if isinstance(d[k], dict):
+            print_dict(d[k], prefix=prefix + "\t")
+        elif isinstance(d[k], list):
+            print_list(d[k], prefix=prefix + "\t")
+        else:
+            print("{}{}".format(prefix + "\t", d[k]))
+
+
+def print_list(l, prefix=""):
+    # recursive print
+    for i in l:
+        if isinstance(i, dict):
+            print_dict(i, prefix=prefix + "\t")
+        elif isinstance(i, list):
+            print_list(i, prefix=prefix + "\t")
+        else:
+            print("{}{}".format(prefix, i))
+    pass
