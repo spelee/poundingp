@@ -1,7 +1,5 @@
 import copy
-# XXX this is duplicated in to many places...
-# such as the person_db_csv file
-# How do you make this static?
+# XXX make 'static'
 required_attributes = ['first_name',
                        'last_name',
                        'company',
